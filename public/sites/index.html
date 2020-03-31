@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+  <head>
+    <meta charset="utf-8">
+    <title>Flappy Bird</title>
+    <link href="https://fonts.googleapis.com/css?family=Montserrat|Noto+Serif|Playfair+Display|Roboto&display=swap" rel="stylesheet">
+    <style type='text/css'>
+      .neon{
+        box-shadow: 0px 0px 10px #2196f3, 0px 0px 40px #2196f3, 0px 0px 40px #2196f3;
+      }
+      *{
+        margin: 0px;
+        padding: 0px;
+      }
+      body,html{
+        width: 100vw;
+        height: 100vh;
+      }
+      canvas{
+        position: absolute;
+        transform: translate(50%,-50%);
+        top: 50%;
+        right: 25%;
+      }
+      #btn{
+        width: 300px;
+        font: 1.5em "Montserrat","Roboto", sans-serif;
+        border: none;
+        background: #0ff;
+        height: 51px;
+        margin-right: 100%;
+      }
+      a{
+        transform: translate(-50%,-50%);
+        position: absolute;
+        bottom: 0px;
+        left: 50%;
+      }
+      #btn:focus{
+        outline: none;
+      }
+      p:first-of-type:not(:first-child){
+        margin-top: 20px;
+      }
+      #txt-stuff{
+        float: left;
+        /* width: 50%; */
+        text-shadow: 0px 0px 5px #2196f3;
+        padding: 10px 0px 5px 10px;
+      }
+      p{
+        text-indent: 10px;
+        font-size: 1em;
+        color: #14b3f3;
+      }
+      #gen::before{
+        content: "Generation: ";
+      }
+      #weights::before{
+        content: "Genes: ";
+      }
+      #score::before{
+        content: "Score: ";
+      }
+      #birds::before{
+        content: "Number Of Birds: ";
+      }
+      #btndiv{
+        position: relative;
+        height: 81px;
+      }
+      #ediv{
+        width: 45%;
+      }
+    </style>
+    <script src="/static/js/bird.js" charset="utf-8"></script>
+    <script src="/static/js/pipe.js" charset="utf-8"></script>
+    <script type="text/javascript">
+      const POP_LIMIT = 2500;
+      const generationOver = 2;
+      const numberOfInputs = 4;
+      const $ = (id) => document.getElementById(id);
+      const map = (vl,mn,mx,nmn,nmx)=>(vl-mn)/(mx-mn)*(nmx-nmn)+nmn;
+      const random = (mn,mx)=>Math.random()*(mx-mn)+mn;
+      let vScore = 0;
+      let birds = [];
+      let pipes = [];
+      let generation = 1;
+      let pipeSettings = {spacingY: 150, spacingX: 200, width: 75, speed: 5}
+      function parseQuery(){
+        if(this.location.href.split("").includes("?")){
+          this.location.href.split("?")[1].split("&").map(vl=>vl.split("=")).forEach((item, i) => {
+            if(item[1] != ""){
+              if(Object.keys(item[0]).contains(item[0])){
+                pipeSettings[item[0]] = item[1];
+              }
+            }
+          });
+        }
+      }
+      function nextGeneration(bestBirds){
+        console.clear();
+        console.log(`Generation: ${++generation}`);
+        // console.log("Previous generation's score "+vScore);
+        birds = [];
+        birds.push(...bestBirds);
+        let bestWeights = [];
+        for(let i = 0; i < bestBirds[0].weights.length; i++){
+          bestWeights.push(0);
+        }
+        for(let i = 0; i < bestBirds.length; i++){
+          for(let b = 0; b < bestBirds[i].weights.length; b++){
+            bestWeights[b] += bestBirds[i].weights[b] / bestBirds.length;
+          }
+        }
+        console.log(...bestWeights);
+        for(let i = 0; i < POP_LIMIT-bestBirds.length; i++){
+          birds.push(new Bird(bestWeights))
+        }
+        console.log(birds.length);
+        clearInterval(itr);
+        //Kill all and reset
+        pipes = [];
+        // $("weights").innerHTML = "<ul>";
+        // bestWeights.forEach((vl, i) => {
+        //   $("weights").innerHTML += `<li>${vl}</li>`;
+        // });
+        // $("weights").innerHTML += "</ul>";
+        $("weights").textContent = bestWeights.map(vl=>map(vl,-1,1,0,255).toString(16).split(".").join("")).join("X");
+        setTimeout(init,50);
+      }
+      function nload(){
+        $("btndiv").setAttribute('hidden','');
+        document.body.removeAttribute("style");
+        document.body.style.backgroundColor = "#00101f";
+        $("ediv").removeAttribute('hidden');
+        window.canvas = $("canvas");
+        window.ctx = canvas.getContext("2d");
+        for(let i = 0; i < POP_LIMIT; i++){
+          birds.push(new Bird());
+        }
+        init();
+      }
+      function init(){
+        $("gen").textContent = generation;
+        $("score").textContent = 0;
+        let temp = false;
+        pipes.push(new Pipe());
+        window.itr = window.setInterval(function(){
+          ctx.clearRect(0,0,canvas.width,canvas.height);
+          ctx.fillStyle = "#000";
+          ctx.fillRect(0,0,canvas.width,canvas.height);
+          let prev = 0;
+          for(let i = 0; i < birds.length; i++){
+            let c = 0; // closest index
+            let cD = Infinity;
+            for(let j = 0; j < pipes.length; j++){
+              if(pipes[j].x - birds[i].x < cD && (pipes[j].x + pipes[j].width) > (birds[i].x + birds[i].r)){
+                cD = pipes[j].x - birds[i].x;
+                c = j;
+              }
+            }
+            birds[i].update(c);
+            birds[i].show();
+            if( (birds[i].x + birds[i].r >= pipes[c].x && (birds[i].y + birds[i].r >= pipes[c].y + pipes[c].spacingY || birds[i].y - birds[i].r <= pipes[c].y)) || (birds[i].y < 0) || (birds[i].y > canvas.height) ){
+              birds.splice(i,1);
+            }
+            $("birds").textContent = birds.length;
+          }
+          for(let i = 0; i < pipes.length; i++){
+            pipes[i].show();
+            pipes[i].update();
+          }
+          if(pipes.length > 0){
+            if(pipes[pipes.length-1].x+pipes[pipes.length-1].width <= canvas.width-pipes[pipes.length-1].spacingX){
+              pipes.push(new Pipe());
+            }
+            if(pipes[0].x + pipes[0].width < 0){
+              pipes.splice(0,1);
+              $("score").textContent++;
+            }
+          }
+          // ctx.font = "20px Georgia";
+          // ctx.fillText(`Score: ${Math.ceil(vScore)}`, 20,20);
+          if(birds.length <= generationOver){
+            nextGeneration(birds);
+          }
+        },30);
+      }
+    </script>
+  </head>
+  <body onload='parseQuery()' style='display:flex;justify-content: center;align-items: center;'>
+    <div id='btndiv'>
+      <button id='btn' onclick='nload()'>Start Simulation</button>
+      <a id='btn2' href='/configure'>Or configure settings</a>
+    </div>
+    <div id='ediv' hidden>
+      <fieldset id='txt-stuff'>
+        <p id='gen'></p>
+        <p id='weights'></p>
+        <p id='birds'></p>
+        <p id='score' style='font-weight:bold;'></p>
+      </fieldset>
+      <canvas id='canvas' class='neon' width='600' height='600'>
+    </div>
+  </body>
+</html>

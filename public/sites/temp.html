@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+  <head>
+    <meta charset="utf-8">
+    <title>Configure AI Settings</title>
+    <style media="screen">
+      .req::before{
+        content: "*";
+        color: red;
+      }
+      fieldset{
+        width: 50%;
+      }
+      li{
+        margin-top: 5px;
+        margin-bottom: 5px;
+      }
+      input:not([type=submit]){
+        float: right;
+      }
+      input[type=submit]{
+        width: 100%;
+        font-size: 1.2em;
+        text-align: center
+      }
+    </style>
+    <script type="text/javascript">
+      function nload(){
+        for(let i = 1; i < document.forms[0].length; i++){
+          document.forms[0][i].placeholder = document.forms[0][i].value;
+        }
+      }
+    </script>
+  </head>
+  <body onload='nload()'>
+    <fieldset>
+      <legend>Configure Network Settings: </legend>
+      <form onsubmit='return onSubmit();' action='.' method='GET'>
+        <p>Pipe Settings:</p>
+        <ul>
+          <li>Distance between pipes: <input type='text' pattern='[0-9]{0,}' id='spacingX' name='spacingX' value="200"></li>
+          <li>Gap size: <input type='text' pattern='[0-9]{0,}' id='spacingY' name='spacingY' value="150"></li>
+          <li>Speed: <input type='text' pattern='[0-9]{0,}' id='speed' name='speed' value="5"></li>
+          <li>Width: <input type='text' pattern='[0-9]{0,}' id='width' name='width' value="75"></li>
+        </ul>
+        <p>Bird Settings:</p>
+        <ul>
+          <li>Bird radius: <input type='text' pattern='[0-9]{0,}' id='size' name='size' value="18"></li>
+          <!-- <li>Starting vertical velocity: <input type='text' id='vel' name='velo'></li> -->
+          <!-- <li>Bird weights: _____</li> -->
+        </ul>
+        <p>General: </p>
+        <ul>
+          <li>Population size: <input type='text' pattern='[0-9]{0,}' id='pop-lim' name='pop-lim' value="2500"></li>
+          <li>Generational seed size: <input type='text' pattern='[0-9]{0,}' id='genSeed' name='genSeed' value="2"></li>
+        </ul>
+        <input type='submit' value='Start Simulation'>
+      </form>
+      <a href='/configure'>Or save your settings</a><br>
+      <a href='/'>Return To Homepage</a>
+    </fieldset>
+  </body>
+</html>
